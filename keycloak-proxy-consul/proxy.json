@@ -1,0 +1,30 @@
+{
+    "target-url": "http://consul-node1:8500",
+    "bind-address": "0.0.0.0",
+    "http-port": "8081",
+    "applications": [
+        {
+            "base-path": "/",
+            "error-page": "/error.html",
+            "adapter-config": {
+                "realm": "master",
+                "resource": "consul",
+                "auth-server-url": "http://keycloak:8080/auth",
+                "ssl-required" : "external",
+                "principal-attribute": "name",
+                "credentials": {
+                    "secret": "99647173-d104-4b03-933b-c93d9cdd1880"
+                }
+            }
+            ,
+            "constraints": [
+                {
+                    "pattern": "/*",
+                    "roles-allowed": [
+                        "user"
+                    ]
+                }
+            ]
+        }
+    ]
+}

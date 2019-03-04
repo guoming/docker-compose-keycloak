@@ -1,0 +1,30 @@
+{
+    "target-url": "http://jaeger-query:16686",
+    "bind-address": "0.0.0.0",
+    "http-port": "8081",
+    "applications": [
+        {
+            "base-path": "/",
+            "error-page": "/error.html",
+            "adapter-config": {
+                "realm": "master",
+                "resource": "jaeger",
+                "auth-server-url": "http://keycloak:8080/auth",
+                "ssl-required" : "external",
+                "principal-attribute": "name",
+                "credentials": {
+                    "secret": "1b72d221-284c-48b7-8561-50ef58faa460"
+                }
+            }
+            ,
+            "constraints": [
+                {
+                    "pattern": "/*",
+                    "roles-allowed": [
+                        "user"
+                    ]
+                }
+            ]
+        }
+    ]
+}

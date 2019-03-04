@@ -1,0 +1,114 @@
+version: '3.5'
+networks:
+  microservice:
+    external:
+      name: microservice
+  apm:
+    external:
+      name: apm
+
+configs:
+  keycloak-proxy-jaeger:
+    file: ./keycloak-proxy-jaeger/proxy.json
+  keycloak-proxy-consul:
+    file: ./keycloak-proxy-consul/proxy.json
+
+services:  
+  postgres:
+    restart: always
+    image: postgres
+    deploy:
+     replicas: 1
+     restart_policy:
+      condition: on-failure
+    ports:
+      - "5432:5432"
+    volumes:
+      - /mnt/postgresql/data:/var/lib/postgresql/data
+    networks:
+      - microservice
+      - apm
+    environment:     
+     - SERVICE_NAME=postgres
+     - SERVICE_TAGS=keycloak
+     - SERVICE_REGION=DC1
+     - SERVICE_CHECK_INITIAL_STATUS=passing
+     - SERVICE_80_CHECK_HTTP=/healthcheck
+     - SERVICE_80_CHECK_INTERVAL=15s
+     - SERVICE_80_CHECK_TIMEOUT=15s
+     - POSTGRES_DB=keycloak 
+     - POSTGRES_USER=keycloak 
+     - POSTGRES_PASSWORD=Passw0rd
+  keycloak-proxy-consul:
+    restart: always
+    image: jboss/keycloak-proxy
+    deploy:
+     replicas: 1
+     restart_policy:
+      condition: on-failure
+    ports:
+      - "19090:8081"    
+    configs:
+      - source: keycloak-proxy-consul
+        target: /opt/jboss/conf/proxy.json
+    networks:
+      - microservice
+      - apm
+    environment:     
+     - SERVICE_NAME=keycloak-proxy-consul
+     - SERVICE_TAGS=keycloak
+     - SERVICE_REGION=DC1
+     - SERVICE_CHECK_INITIAL_STATUS=passing
+     - SERVICE_80_CHECK_HTTP=/healthcheck
+     - SERVICE_80_CHECK_INTERVAL=15s
+     - SERVICE_80_CHECK_TIMEOUT=15s
+  keycloak-proxy-jaeger:
+    restart: always
+    image: jboss/keycloak-proxy
+    deploy:
+     replicas: 1
+     restart_policy:
+      condition: on-failure
+    ports:
+      - "19091:8081"    
+    configs:
+      - source: keycloak-proxy-jaeger
+        target: /opt/jboss/conf/proxy.json
+    networks:
+      - microservice
+      - apm
+    environment:     
+     - SERVICE_NAME=keycloak-proxy-jaeger
+     - SERVICE_TAGS=keycloak
+     - SERVICE_REGION=DC1
+     - SERVICE_CHECK_INITIAL_STATUS=passing
+     - SERVICE_80_CHECK_HTTP=/healthcheck
+     - SERVICE_80_CHECK_INTERVAL=15s
+     - SERVICE_80_CHECK_TIMEOUT=15s
+  keycloak:
+    restart: always
+    image: jboss/keycloak
+    deploy:
+     replicas: 1
+     restart_policy:
+      condition: on-failure
+    ports:
+      - "8080:8080"
+    networks:
+      - microservice
+      - apm
+    environment:     
+     - SERVICE_NAME=keycloak
+     - SERVICE_TAGS=keycloak
+     - SERVICE_REGION=DC1
+     - SERVICE_CHECK_INITIAL_STATUS=passing
+     - SERVICE_80_CHECK_HTTP=/healthcheck
+     - SERVICE_80_CHECK_INTERVAL=15s
+     - SERVICE_80_CHECK_TIMEOUT=15s     
+     - DB_VENDOR=POSTGRES
+     - DB_ADDR=postgres
+     - DB_DATABASE=keycloak
+     - DB_USER=keycloak
+     - DB_PASSWORD=Passw0rd
+     - KEYCLOAK_USER=admin
+     - KEYCLOAK_PASSWORD=Passw0rd
